@@ -59,7 +59,7 @@ async function SearchContent({
   ].join(" ");
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)]">
+    <div className="grid gap-8 lg:grid-cols-[20rem_minmax(0,1fr)]">
       <aside
         aria-label="Филтри за търсене"
         className="lg:sticky lg:top-20 lg:self-start"
@@ -128,7 +128,7 @@ async function SearchContent({
 function SearchSkeleton() {
   return (
     <div
-      className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)]"
+      className="grid gap-8 lg:grid-cols-[20rem_minmax(0,1fr)]"
       aria-busy="true"
       aria-label="Зареждане на резултати"
     >

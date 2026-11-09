@@ -215,6 +215,7 @@ export function SearchForm({
             <Button
               type="button"
               variant={isHero ? "outline-dark" : "outline"}
+              className="h-auto min-h-10 py-2 whitespace-normal"
               onClick={locate}
               disabled={geo.status === "locating"}
             >
