@@ -33,7 +33,11 @@ Homepage with live data, category & city landing pages, search with PostGIS
 filters, list + map, business cards, business profiles, sitemap, robots,
 structured data.
 
-## Phase 4 — Business dashboard ⬜
+## Phase 4 — Business dashboard 🟡 (in progress)
+Done: onboarding with map pin, profile, address/roadside radius, weekly hours,
+services and prices, submit for review, 30-day stats. Pending: media uploads,
+team invitations (needs Resend), multiple locations UI.
+
 Business onboarding, profile, locations, hours, services, media uploads
 (Supabase Storage), team invites and permissions, overview stats.
 

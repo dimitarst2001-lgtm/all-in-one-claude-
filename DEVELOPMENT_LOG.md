@@ -160,3 +160,36 @@ Known limitations:
   streaming has already started (Cache Components behaviour).
 - Map tiles (OpenFreeMap) and real Supabase auth not verified from this
   container (hosts blocked).
+
+## 2026-11-09 — Phase 4 (part 1): business dashboard
+
+Delivered:
+- Migration `20261109120000_business_dashboard.sql`: `create_business`
+  (slug generation, primary location, point must be within 60 km of the
+  city), `update_business_location`, `set_location_hours` (atomic replace),
+  `my_businesses`, `dashboard_business`; all SECURITY INVOKER so RLS applies.
+  Draft-period limits use the entry plan; `max_locations`,
+  `max_team_members` and a 5-businesses-per-account limit are enforced by
+  triggers (unauthorised inserts are left to RLS so they fail with a
+  permission error rather than leaking limits).
+- `/dashboard` (list or onboarding CTA), `/dashboard/new` (form with
+  MapLibre pin picker, manual coordinates fallback, no geocoding service),
+  `/dashboard/[id]` overview (setup checklist, submit for review, rejection
+  reason, 30-day stats, plan), `profile`, `location` (24/7, roadside radius
+  and vehicle restrictions, bays), `hours` (split days, copy Monday),
+  `services` (CRUD, euro prices stored as cents, plan limit shown).
+- Staff role sees the dashboard read-only; managers/owners edit.
+- Public caches are invalidated with `updateTag` after edits.
+- Dev shim now emulates password sign-in (HS256, throwaway secret, dev
+  password) and the small PostgREST subset the app uses, so the dashboard
+  can be tested end to end against local PostgreSQL with RLS.
+
+Verification (2026-11-09):
+- `pnpm typecheck` ✅ · `pnpm lint` ✅ · `pnpm test` ✅ 38/38 ·
+  `pnpm db:test` ✅ (41 + marketplace + 20 dashboard assertions) · `pnpm build` ✅.
+- Playwright: anonymous `/dashboard` → login → onboarding (missing pin error,
+  map click) → profile → hours → service → submit → "Чака одобрение";
+  second account gets 404 with no data leak; 390 px without horizontal
+  scroll; no console errors.
+
+Pending in Phase 4: media uploads (Storage), team invitations (email).

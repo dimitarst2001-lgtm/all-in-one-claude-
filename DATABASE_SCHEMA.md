@@ -175,7 +175,13 @@ jsonb`, `after jsonb`, `ip inet`, `created_at`. Insert-only; admins read.
 - Admin-managed tables (`cities`, `categories`, `services`, `subscription_plans`,
   `plan_features`, `platform_settings`, `user_roles`, `business_members`) are
   audited by the `audit_row_change()` trigger.
-- Tests: `supabase/tests/10_rls_and_integrity.sql` (41 assertions).
+- Tests: `supabase/tests/10_rls_and_integrity.sql` (41 assertions),
+  `30_dashboard.sql` (20 assertions).
+- Draft period: before a subscription exists, limits fall back to the entry
+  plan (Starter) so a business can prepare its profile. Visibility and
+  on/off features (online booking) still require a live subscription.
+- Additional limits: `max_locations`, `max_team_members` (members + open
+  invitations), max 5 businesses per account.
 
 ## Key SQL functions
 
@@ -186,6 +192,8 @@ jsonb`, `after jsonb`, `ip inet`, `created_at`. Insert-only; admins read.
 | `is_publicly_visible(business_id)` | approval + subscription + soft delete |
 | `business_has_feature(business_id, key)` / `business_feature_limit(...)` | entitlements |
 | `search_businesses(...)` | geo + filters + pagination (Phase 3) |
+| `create_business(...)`, `update_business_location(...)`, `set_location_hours(...)` | dashboard writes, SECURITY INVOKER (RLS applies), atomic |
+| `my_businesses()`, `dashboard_business(id)` | dashboard reads (members only via RLS) |
 | `roadside_providers_for_point(lat, lng, service_slug)` | coverage lookup (Phase 5) |
 | `available_slots(location_id, date, duration)` | slot generation (Phase 5) |
 | `create_booking(...)` | transactional booking with bay assignment (Phase 5) |
