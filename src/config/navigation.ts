@@ -10,8 +10,12 @@ export type NavItem = {
  * that lead nowhere.
  */
 export const mainNav: readonly NavItem[] = [
-  { title: "Услуги", href: "/#categories" },
-  { title: "Как работи", href: "/#how-it-works" },
+  { title: "Търсене", href: "/search" },
+  { title: "Варна", href: "/varna" },
+  {
+    title: "Пътна помощ",
+    href: "/search?category=roadside-assistance&city=varna",
+  },
   { title: "За бизнеси", href: "/for-businesses" },
 ];
 

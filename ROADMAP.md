@@ -28,7 +28,7 @@ Repository inspected (empty), project initialised, documentation written.
 - Not yet verified against a live Supabase project (blocked from the dev
   container); see DEVELOPMENT_LOG.md
 
-## Phase 3 — Public marketplace ⬜
+## Phase 3 — Public marketplace ✅ (live Supabase verification pending)
 Homepage with live data, category & city landing pages, search with PostGIS
 filters, list + map, business cards, business profiles, sitemap, robots,
 structured data.

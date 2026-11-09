@@ -122,3 +122,41 @@ Verification (2026-11-09):
 Open items: Supabase, OCM and OpenFreeMap hosts are blocked from the
 development container, so integrations are verified against real services
 from a developer machine or Vercel preview.
+
+## 2026-11-09 — Phase 3: public marketplace
+
+Delivered:
+- Public read layer as `SECURITY INVOKER` SQL functions (migration
+  `20261109110000_public_marketplace.sql`): `public_cities`,
+  `public_categories`, `search_businesses` (city/category/service/name,
+  PostGIS radius 5–100 km, open now, booking only, sort by distance/name;
+  rating sort is not offered because no verified reviews exist yet),
+  `get_business_profile`, `public_business_paths`. RLS still applies (anon).
+- Pages: `/search` (list + MapLibre map, mobile list/map toggle, pagination,
+  sort), `/{city}`, `/{city}/{category}` (only non-empty combinations are
+  linked and listed in the sitemap), `/businesses/{city}/{slug}` profiles
+  with services, prices, hours, roadside coverage, call/directions actions,
+  breadcrumbs + LocalBusiness JSON-LD (not for demo listings).
+- Homepage uses live data (featured businesses, category counts).
+- Demo listings are labelled on cards and profiles, `noindex`, excluded from
+  the sitemap and structured data.
+- Analytics events (`profile_view`, `phone_click`, …) via rate-limited server
+  action, no personal data.
+- Browser geolocation is optional and rounded to ~100 m before use.
+- `scripts/dev-rest-shim.mjs` (dev/test only) serves the public RPCs from the
+  local test DB so pages render without a Supabase project.
+- MapLibre worker is copied to `public/vendor/` on install (CSP-friendly,
+  no blob workers); linting ignores that folder.
+
+Verification (2026-11-09):
+- `pnpm typecheck` ✅ · `pnpm lint` ✅ 0 problems · `pnpm test` ✅ 27/27 ·
+  `pnpm db:test` ✅ 66 assertions · `pnpm build` ✅ against the shim.
+- Playwright: hero search → Varna auto repair (3 results); geolocation + 5 km
+  → 2 results with distances; tel links; mobile map mounts only after toggle;
+  no horizontal scroll at 390 px; no console errors (map tiles stubbed).
+
+Known limitations:
+- Unknown slugs return 404 content with `noindex`, but HTTP status 200 when
+  streaming has already started (Cache Components behaviour).
+- Map tiles (OpenFreeMap) and real Supabase auth not verified from this
+  container (hosts blocked).
