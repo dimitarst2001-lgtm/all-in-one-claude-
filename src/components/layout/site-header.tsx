@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { Logo } from "@/components/brand/logo";
+import { HeaderAccount } from "@/components/layout/header-account";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { mainNav } from "@/config/navigation";
@@ -27,6 +29,9 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <Suspense fallback={null}>
+            <HeaderAccount />
+          </Suspense>
           <Button
             asChild
             variant="brand"

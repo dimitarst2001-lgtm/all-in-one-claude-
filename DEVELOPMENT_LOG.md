@@ -5,6 +5,58 @@ what is still open. Nothing is listed as done without verification evidence.
 
 ---
 
+## 2026-11-09 — Phase 2 (database and authentication)
+
+Database (`supabase/migrations`, 10 files):
+- Extensions (PostGIS, btree_gist, citext, pgcrypto) in the `extensions`
+  schema, enums, `set_updated_at()`, Bulgarian-transliterating `slugify()`.
+- Identity (`profiles` auto-created from `auth.users`, `user_roles`), system
+  (`audit_logs`, `platform_settings`, generic audit trigger), geography and
+  catalog, businesses (members, invitations, locations with GiST indexes,
+  service areas, hours with overlap exclusion, offered services, media),
+  subscriptions/entitlements/visibility, bookings (bay-based exclusion
+  constraint), customer tables, EV charging, reports, storage bucket and
+  policies, final privilege hardening.
+- Decisions: column-level grants instead of trusting update policies for
+  protected fields; moderation only through audited SECURITY DEFINER RPCs;
+  plan limits enforced by triggers; public visibility = approved AND
+  (active/trialing/past_due subscription OR demo) AND not deleted.
+- Seed: BG + 7 cities (Varna, Sofia, Plovdiv, Veliko Tarnovo active), 5
+  categories, 35 service types, 3 plans with features, Open Charge Map source,
+  10 demo businesses in Varna (names start with "Демо", phones use the
+  invalid "+359 52 000" prefix, e-mails on example.com).
+
+Authentication (`src/features/auth`, `src/app/(auth)`):
+- Sign up (customer / business intent, terms consent), sign in, sign out,
+  forgot password, reset password, `/auth/confirm` for `token_hash` and PKCE
+  links, `/auth/error`, `/account`.
+- `getCurrentUser()` DAL verifies the JWT with `getClaims()` and loads roles
+  under RLS; suspended users are treated as signed out.
+- Proxy redirects anonymous visitors away from `/account`, `/dashboard`,
+  `/admin` (optimistic; real checks stay server-side).
+- Rate limiting (`src/lib/security/rate-limit.ts`): Upstash Redis REST in
+  production, in-memory fallback; open-redirect protection for `?next=`.
+- No privileges are ever derived from sign-up metadata (tested).
+
+Verification (2026-11-09):
+- `scripts/db-test.sh` on PostgreSQL 16.15 + PostGIS 3 with the Supabase shim:
+  all migrations + seed apply cleanly; **41/41** RLS and integrity assertions
+  pass (tenant isolation, self-escalation, column protection, forged
+  subscriptions, moderation + audit, public visibility, plan limits, storage
+  paths, booking overlap/buffer/bay/cancel cases, opening-hour overlaps).
+  A deliberately failing test makes the script exit 1.
+- `pnpm typecheck` ✅ · `pnpm lint` ✅ · `pnpm test` ✅ 17/17 · `pnpm build` ✅.
+- Browser (iPhone 13): register/login validation errors render with
+  accessible wiring; with Supabase unconfigured, actions return a friendly
+  "temporarily unavailable" message; no console errors.
+
+Not verified yet: the auth flows against a real Supabase project (the
+Supabase API is blocked from the development container). Needs a check on a
+Vercel preview with real keys: sign-up e-mail, confirmation link, login,
+password reset, logout.
+
+---
+
 ## 2026-11-09 — Phase 0 and Phase 1 (foundation)
 
 ### Phase 0 — inspection

@@ -15,10 +15,18 @@ Repository inspected (empty), project initialised, documentation written.
 - Zod-validated environment variables, `.env.example`
 - Legal page shells (privacy, terms, cookies) with "pending legal review" notice
 
-## Phase 2 — Database and authentication ⬜
-Migrations (schema, PostGIS, RLS, functions), auth flows (register customer /
-business, login, logout, reset, verification), roles, Varna demo seed
-(`is_demo = true`, labelled in UI), pgTAP policy tests.
+## Phase 2 — Database and authentication ✅ (live Supabase verification pending)
+- 10 migrations: full schema, PostGIS, RLS on every table, role helpers,
+  moderation RPCs, entitlement triggers, booking exclusion constraint,
+  storage bucket + policies, audit triggers
+- Varna demo seed (10 businesses, `is_demo = true`), cities, categories,
+  service types, plans and plan features, EV data source
+- SQL test suite (41 assertions) + `scripts/db-test.sh` + CI job
+- Auth: register (customer/business), login, logout, forgot/reset password,
+  e-mail confirmation route, account page, header auth state, proxy gate,
+  rate limiting
+- Not yet verified against a live Supabase project (blocked from the dev
+  container); see DEVELOPMENT_LOG.md
 
 ## Phase 3 — Public marketplace ⬜
 Homepage with live data, category & city landing pages, search with PostGIS

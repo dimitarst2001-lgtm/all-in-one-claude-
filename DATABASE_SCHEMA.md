@@ -87,7 +87,7 @@ Unique `(city_id, slug)`. Public read when `is_publicly_visible(id)`:
 `currency`, `duration_minutes`, `is_bookable`, `is_active`, `sort_order`,
 `deleted_at`. Trigger enforces plan limit `max_services`.
 
-**business_hours** — `business_location_id`, `weekday 0-6 (ISO Mon=1…Sun=7)`,
+**business_hours** — `business_location_id`, `weekday 1-7 (ISO, Mon=1…Sun=7)`,
 `opens_at time`, `closes_at time`, multiple intervals per day allowed.
 `hours_verified_at` on the location says whether "open now" may be shown.
 
@@ -122,8 +122,9 @@ service role (webhook). Members read their own business's rows.
 `customer_phone`, `vehicle jsonb` (make, model, year, plate — optional),
 `notes`, `starts_at`, `ends_at`, `buffer_minutes`, `status booking_status`,
 `status_changed_at`, `status_reason`.
-Generated `occupied tstzrange = [starts_at, ends_at + buffer)`.
-**Exclusion constraint**: `EXCLUDE USING gist (business_location_id WITH =, bay_number WITH =, occupied WITH &&) WHERE (status IN ('pending','confirmed'))`.
+`occupied_until = ends_at + buffer` (stored; `timestamptz + interval` is not
+immutable, so it cannot be a generated column).
+**Exclusion constraint** `bookings_no_overlap`: `EXCLUDE USING gist (business_location_id WITH =, bay_number WITH =, tstzrange(starts_at, occupied_until, '[)') WITH &&) WHERE (status IN ('pending','confirmed'))`.
 **booking_services** — `booking_id`, `business_service_id`, `price_cents_snapshot`, `name_snapshot`.
 
 ## Customer
@@ -160,6 +161,22 @@ jsonb`, `after jsonb`, `ip inet`, `created_at`. Insert-only; admins read.
 `details`, `status report_status`, `resolved_by`, `resolved_at`.
 **platform_settings** — `key text pk`, `value jsonb`, `updated_by`.
 
+## Implemented privilege model (Phase 2)
+
+- Column-level grants stop end users from writing moderation fields:
+  `businesses.status / is_verified / is_demo / approved_* / created_by`,
+  `profiles.is_suspended`, and all of `subscriptions`, `payments`,
+  `webhook_events`, `audit_logs`, `bookings` (writes via functions only).
+- Moderation goes through `admin_set_business_status()` and
+  `admin_set_business_verified()` (staff only, audited); owners use
+  `submit_business_for_review()`.
+- Plan limits are enforced by triggers (`max_services`, `max_images`,
+  `online_booking`) using `business_feature_limit()` / `business_has_feature()`.
+- Admin-managed tables (`cities`, `categories`, `services`, `subscription_plans`,
+  `plan_features`, `platform_settings`, `user_roles`, `business_members`) are
+  audited by the `audit_row_change()` trigger.
+- Tests: `supabase/tests/10_rls_and_integrity.sql` (41 assertions).
+
 ## Key SQL functions
 
 | Function | Purpose |
@@ -168,7 +185,7 @@ jsonb`, `after jsonb`, `ip inet`, `created_at`. Insert-only; admins read.
 | `has_business_role(business_id, min_role)` | RLS helper, role hierarchy owner > manager > staff |
 | `is_publicly_visible(business_id)` | approval + subscription + soft delete |
 | `business_has_feature(business_id, key)` / `business_feature_limit(...)` | entitlements |
-| `search_businesses(...)` | geo + filters + pagination |
-| `roadside_providers_for_point(lat, lng, service_slug)` | coverage lookup |
-| `available_slots(location_id, date, duration)` | slot generation |
-| `create_booking(...)` | transactional booking with bay assignment |
+| `search_businesses(...)` | geo + filters + pagination (Phase 3) |
+| `roadside_providers_for_point(lat, lng, service_slug)` | coverage lookup (Phase 5) |
+| `available_slots(location_id, date, duration)` | slot generation (Phase 5) |
+| `create_booking(...)` | transactional booking with bay assignment (Phase 5) |
