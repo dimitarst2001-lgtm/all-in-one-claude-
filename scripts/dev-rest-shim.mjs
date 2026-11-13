@@ -33,6 +33,8 @@ const PUBLIC_RPC = new Set([
   "get_business_profile",
   "public_business_paths",
   "track_business_event",
+  "booking_options",
+  "available_slots",
 ]);
 const USER_RPC = new Set([
   ...PUBLIC_RPC,
@@ -48,8 +50,19 @@ const USER_RPC = new Set([
   "business_feature_limit",
   "invitation_preview",
   "accept_business_invitation",
+  "create_booking",
+  "set_booking_status",
+  "cancel_my_booking",
+  "business_bookings",
+  "my_bookings",
+  "add_blocked_days",
+  "business_blocked_days",
 ]);
 const WRITE_RPC = new Set([
+  "create_booking",
+  "set_booking_status",
+  "cancel_my_booking",
+  "add_blocked_days",
   "register_business_media",
   "move_business_media",
   "accept_business_invitation",
@@ -67,6 +80,7 @@ const TABLES = new Set([
   "business_media",
   "business_members",
   "business_invitations",
+  "blocked_periods",
 ]);
 
 const PORT = Number(process.env.SHIM_PORT ?? 54321);
@@ -265,6 +279,14 @@ async function handleRpc(req, res, fn, args) {
       `select public.${fn}(${placeholders}) as result`,
       names.map((name) => {
         const value = args[name];
+        // Arrays of scalars map to Postgres arrays (e.g. uuid[]); objects and
+        // arrays of objects are sent as JSON (jsonb parameters).
+        if (
+          Array.isArray(value) &&
+          value.every((item) => item === null || typeof item !== "object")
+        ) {
+          return value;
+        }
         return value !== null && typeof value === "object"
           ? JSON.stringify(value)
           : value;

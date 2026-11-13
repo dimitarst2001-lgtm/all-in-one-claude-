@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarCheckIcon,
   ClockIcon,
   ImageIcon,
   LayoutDashboardIcon,
@@ -19,6 +20,7 @@ const items = [
   { segment: "/profile", label: "Профил", icon: StoreIcon },
   { segment: "/location", label: "Адрес", icon: MapPinIcon },
   { segment: "/hours", label: "Работно време", icon: ClockIcon },
+  { segment: "/bookings", label: "Резервации", icon: CalendarCheckIcon },
   { segment: "/services", label: "Услуги", icon: ListChecksIcon },
   { segment: "/photos", label: "Снимки", icon: ImageIcon },
   { segment: "/team", label: "Екип", icon: UsersIcon },

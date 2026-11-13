@@ -220,7 +220,18 @@ export const serviceSchema = z
       .literal("on")
       .optional()
       .transform((value) => value === "on"),
+    isBookable: z
+      .literal("on")
+      .optional()
+      .transform((value) => value === "on"),
   })
+  .refine(
+    (service) => !service.isBookable || service.durationMinutes !== null,
+    {
+      error: "За онлайн записване въведи времетраене.",
+      path: ["durationMinutes"],
+    },
+  )
   .refine(
     (service) =>
       service.priceFrom === null ||
