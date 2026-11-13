@@ -193,3 +193,41 @@ Verification (2026-11-09):
   scroll; no console errors.
 
 Pending in Phase 4: media uploads (Storage), team invitations (email).
+
+## 2026-11-13 — Deployment and Phase 4 (part 2): photos and team
+
+Deployment:
+- Supabase project (EU) has all migrations and the seed; Vercel project
+  `all-in-one-auto` (region fra1) serves https://all-in-one-auto.vercel.app.
+  The Vercel GitHub app has no access to this repository yet, so deployments
+  are created from the public repo on demand rather than on every push.
+- Migration history on Supabase uses MCP-generated versions, not the file
+  timestamps; reconcile before using `supabase db push`.
+
+Delivered:
+- Migration `20261113100000_media_and_team.sql`: `register_business_media`,
+  `move_business_media`, `business_team`, `invitation_preview`,
+  `accept_business_invitation`, a guard that keeps the owner role out of role
+  changes, and a fix for `enforce_team_member_limit` (it read `new.user_id`
+  on `business_invitations`, so every invitation insert failed).
+- `/dashboard/[id]/photos`: logo, cover and gallery. The browser downscales
+  and re-encodes to WebP before uploading straight to Storage (RLS: managers
+  of that business only); the row is registered afterwards and refused rows
+  remove the uploaded file. Reorder and remove; plan limit shown and enforced.
+- `/dashboard/[id]/team`: members, roles (owner changes staff/manager),
+  remove/leave, open invitations with revoke, invite form. The invitation
+  link is shown once to copy; it is also e-mailed when `RESEND_API_KEY` and
+  `EMAIL_FROM` are set. `/invitations/[token]` previews and accepts.
+- Dashboard pages declare `instant = false` (private per-user views), which
+  removes the dev-time blocking-route warnings.
+- Dev shim: storage upload/delete/public read for `business-media`, CORS,
+  `order` and `DELETE` support, new RPCs and tables.
+
+Verification (2026-11-13):
+- `pnpm typecheck` ✅ · `pnpm lint` ✅ · `pnpm test` ✅ 40/40 ·
+  `pnpm db:test` ✅ (+24 media/team assertions) · `pnpm build` ✅.
+- Playwright against the shim: logo + 2 gallery uploads (3000×2000 JPEG
+  stored as 2000×1333 WebP), reorder, remove (file deleted); invite →
+  second account accepts → reuse refused → owner demotes to staff → staff
+  sees photos read-only; 390 px without horizontal scroll; no console errors
+  (image optimisation of 127.0.0.1 URLs is blocked by Next in dev only).

@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Работно време",
   robots: { index: false },
 };
+// Private, per-user view: rendered on demand inside the layout's Suspense
+// boundary rather than as an instant-navigation shell.
+export const instant = false;
 
 export default async function BusinessHoursPage({
   params,

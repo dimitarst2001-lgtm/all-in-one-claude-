@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Табло",
   robots: { index: false },
 };
+// Private, per-user view: rendered on demand inside the layout's Suspense
+// boundary rather than as an instant-navigation shell.
+export const instant = false;
 
 const statLabels = [
   { key: "profile_view", label: "Прегледа на профила", icon: EyeIcon },
@@ -30,7 +33,7 @@ export default async function BusinessOverviewPage({
   searchParams,
 }: PageProps<"/dashboard/[businessId]">) {
   const { businessId } = await params;
-  const { created } = await searchParams;
+  const { created, joined } = await searchParams;
   const { business, canEdit } = await loadDashboardBusiness(
     businessId,
     `/dashboard/${businessId}`,
@@ -49,6 +52,14 @@ export default async function BusinessOverviewPage({
             className="rounded-md border border-success/30 bg-success/5 p-3 text-sm text-success"
           >
             Бизнес профилът е създаден като чернова.
+          </p>
+        )}
+        {joined === "1" && (
+          <p
+            role="status"
+            className="rounded-md border border-success/30 bg-success/5 p-3 text-sm text-success"
+          >
+            Вече си част от екипа на {business.name}.
           </p>
         )}
 

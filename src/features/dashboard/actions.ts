@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh, updateTag } from "next/cache";
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -9,15 +9,16 @@ import {
   validationError,
   type FormState,
 } from "@/features/auth/form-state";
-import { getCurrentUser } from "@/features/auth/session";
-import { marketplaceTags } from "@/features/marketplace/queries";
-import { MissingConfigError } from "@/lib/env/public";
 import { getClientIp } from "@/lib/security/client-ip";
 import { getRateLimiter } from "@/lib/security/rate-limit";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-import { dashboardErrorMessage } from "./errors";
-import { getDashboardBusiness } from "./queries";
+import {
+  authed,
+  fail,
+  invalidatePublic,
+  NOT_SIGNED_IN,
+  SAVED,
+} from "./action-helpers";
 import {
   createBusinessSchema,
   hoursSchema,
@@ -31,55 +32,6 @@ import {
  * (RLS, column grants, SECURITY INVOKER functions); these actions validate
  * input, translate errors and invalidate public caches.
  */
-
-type Supabase = Awaited<ReturnType<typeof getSupabaseServerClient>>;
-
-const NOT_SIGNED_IN: FormState = {
-  status: "error",
-  message: "Сесията ти е изтекла. Влез отново.",
-};
-const UNAVAILABLE: FormState = {
-  status: "error",
-  message: "Услугата временно не е налична. Опитай отново по-късно.",
-};
-const SAVED: FormState = {
-  status: "success",
-  message: "Промените са запазени.",
-};
-
-const uuid = z.uuid();
-
-async function authed(
-  run: (supabase: Supabase) => Promise<FormState>,
-): Promise<FormState> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return NOT_SIGNED_IN;
-    return await run(await getSupabaseServerClient());
-  } catch (error) {
-    if (error instanceof MissingConfigError) return UNAVAILABLE;
-    throw error;
-  }
-}
-
-/** Public listing data may have changed: drop the cached marketplace pages. */
-async function invalidatePublic(businessId: string) {
-  // Slug and city never change through the dashboard, so the request-cached
-  // read is accurate enough to find the public cache entry.
-  const business = await getDashboardBusiness(businessId);
-  updateTag(marketplaceTags.businesses);
-  if (business) {
-    updateTag(marketplaceTags.business(business.city.slug, business.slug));
-  }
-  refresh();
-}
-
-function fail(
-  error: Parameters<typeof dashboardErrorMessage>[0],
-  values?: Record<string, string>,
-): FormState {
-  return { status: "error", message: dashboardErrorMessage(error), values };
-}
 
 // Onboarding --------------------------------------------------------------------
 
@@ -148,7 +100,7 @@ export async function updateProfile(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  if (!uuid.safeParse(businessId).success) return NOT_SIGNED_IN;
+  if (!z.uuid().safeParse(businessId).success) return NOT_SIGNED_IN;
   const raw = formValues(formData, [
     "name",
     "description",
@@ -185,8 +137,8 @@ export async function updateLocation(
   formData: FormData,
 ): Promise<FormState> {
   if (
-    !uuid.safeParse(businessId).success ||
-    !uuid.safeParse(locationId).success
+    !z.uuid().safeParse(businessId).success ||
+    !z.uuid().safeParse(locationId).success
   ) {
     return NOT_SIGNED_IN;
   }
@@ -232,8 +184,8 @@ export async function saveHours(
   formData: FormData,
 ): Promise<FormState> {
   if (
-    !uuid.safeParse(businessId).success ||
-    !uuid.safeParse(locationId).success
+    !z.uuid().safeParse(businessId).success ||
+    !z.uuid().safeParse(locationId).success
   ) {
     return NOT_SIGNED_IN;
   }
@@ -269,7 +221,7 @@ export async function saveService(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  if (!uuid.safeParse(businessId).success) return NOT_SIGNED_IN;
+  if (!z.uuid().safeParse(businessId).success) return NOT_SIGNED_IN;
   const raw = formValues(formData, [
     "id",
     "serviceTypeId",
@@ -325,8 +277,8 @@ export async function deleteService(
   _prev: FormState,
 ): Promise<FormState> {
   if (
-    !uuid.safeParse(businessId).success ||
-    !uuid.safeParse(serviceId).success
+    !z.uuid().safeParse(businessId).success ||
+    !z.uuid().safeParse(serviceId).success
   ) {
     return NOT_SIGNED_IN;
   }
@@ -351,7 +303,7 @@ export async function submitForReview(
   businessId: string,
   _prev: FormState,
 ): Promise<FormState> {
-  if (!uuid.safeParse(businessId).success) return NOT_SIGNED_IN;
+  if (!z.uuid().safeParse(businessId).success) return NOT_SIGNED_IN;
   return authed(async (supabase) => {
     const { error } = await supabase.rpc("submit_business_for_review", {
       p_business_id: businessId,

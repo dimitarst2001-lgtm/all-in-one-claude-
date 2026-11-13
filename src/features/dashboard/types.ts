@@ -162,3 +162,55 @@ export function setupSteps(business: DashboardBusiness): SetupStep[] {
     },
   ];
 }
+
+// Photos ------------------------------------------------------------------------
+
+export const mediaKindSchema = z.enum(["logo", "cover", "gallery"]);
+export type MediaKind = z.infer<typeof mediaKindSchema>;
+
+export const dashboardMediaSchema = z.object({
+  id: z.uuid(),
+  kind: mediaKindSchema,
+  storage_path: z.string(),
+  alt_text: z.string().nullable(),
+  width: z.number().nullable(),
+  height: z.number().nullable(),
+  sort_order: z.number(),
+});
+export type DashboardMedia = z.infer<typeof dashboardMediaSchema>;
+
+// Team --------------------------------------------------------------------------
+
+export const teamSchema = z.object({
+  members: z.array(
+    z.object({
+      user_id: z.guid(),
+      role: businessRoleSchema,
+      full_name: z.string().nullable(),
+      email: z.string().nullable(),
+      joined_at: z.string().nullable(),
+      is_self: z.boolean(),
+    }),
+  ),
+  invitations: z.array(
+    z.object({
+      id: z.uuid(),
+      email: z.string(),
+      role: businessRoleSchema,
+      expires_at: z.string(),
+      created_at: z.string(),
+      is_expired: z.boolean(),
+    }),
+  ),
+});
+export type BusinessTeam = z.infer<typeof teamSchema>;
+
+export const invitationPreviewSchema = z.object({
+  business_id: z.uuid(),
+  business_name: z.string(),
+  role: businessRoleSchema,
+  email: z.string(),
+  status: z.enum(["open", "accepted", "revoked", "expired"]),
+  email_matches: z.boolean(),
+});
+export type InvitationPreview = z.infer<typeof invitationPreviewSchema>;

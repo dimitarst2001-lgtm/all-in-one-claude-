@@ -228,3 +228,12 @@ export const serviceSchema = z
       service.priceTo >= service.priceFrom,
     { error: "Крайната цена трябва да е по-голяма.", path: ["priceTo"] },
   );
+
+export const inviteSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email("Въведи валиден имейл адрес.").max(254)),
+  role: z.enum(["staff", "manager"], "Избери роля."),
+});
