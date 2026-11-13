@@ -1,4 +1,6 @@
+import Link from "next/link";
 import {
+  ArrowRightIcon,
   BatteryChargingIcon,
   CircleAlertIcon,
   LifeBuoyIcon,
@@ -34,9 +36,16 @@ export function SpotlightSections() {
                 className="mt-0.5 size-4 shrink-0 text-brand"
                 aria-hidden="true"
               />
-              Местоположението е по желание. Можеш да въведеш адрес ръчно.
+              Местоположението е по желание. Можеш да избереш град вместо това.
             </li>
           </ul>
+          <Link
+            href="/search?category=roadside-assistance&city=varna"
+            className="mt-6 inline-flex items-center gap-1.5 self-start text-sm font-medium text-white hover:underline"
+          >
+            Намери пътна помощ
+            <ArrowRightIcon className="size-4" aria-hidden="true" />
+          </Link>
         </article>
 
         <article className="flex flex-col rounded-lg border bg-card p-6 shadow-card md:p-8">

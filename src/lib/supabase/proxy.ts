@@ -6,6 +6,8 @@ import {
   requireSupabasePublicConfig,
 } from "@/lib/env/public";
 
+const PRIVATE_PREFIXES = ["/account", "/dashboard", "/admin"] as const;
+
 /**
  * Refreshes the Supabase auth session on every matched request and writes the
  * updated cookies to both the request (for Server Components) and response.
@@ -47,7 +49,24 @@ export async function updateSupabaseSession(
 
   // Do not run code between createServerClient and getClaims(): it validates
   // the JWT and triggers the refresh that keeps the session alive.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+
+  // Optimistic gate for private areas. The real authorization check happens
+  // again next to the data (DAL + RLS); this only avoids rendering a page
+  // shell for anonymous visitors.
+  const { pathname, search } = request.nextUrl;
+  const isPrivate = PRIVATE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+  if (isPrivate && !data?.claims?.sub) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.search = `?next=${encodeURIComponent(pathname + search)}`;
+    const redirect = NextResponse.redirect(loginUrl);
+    for (const cookie of response.cookies.getAll())
+      redirect.cookies.set(cookie);
+    return redirect;
+  }
 
   return response;
 }

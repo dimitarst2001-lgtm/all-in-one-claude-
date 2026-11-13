@@ -5,6 +5,58 @@ what is still open. Nothing is listed as done without verification evidence.
 
 ---
 
+## 2026-11-09 — Phase 2 (database and authentication)
+
+Database (`supabase/migrations`, 10 files):
+- Extensions (PostGIS, btree_gist, citext, pgcrypto) in the `extensions`
+  schema, enums, `set_updated_at()`, Bulgarian-transliterating `slugify()`.
+- Identity (`profiles` auto-created from `auth.users`, `user_roles`), system
+  (`audit_logs`, `platform_settings`, generic audit trigger), geography and
+  catalog, businesses (members, invitations, locations with GiST indexes,
+  service areas, hours with overlap exclusion, offered services, media),
+  subscriptions/entitlements/visibility, bookings (bay-based exclusion
+  constraint), customer tables, EV charging, reports, storage bucket and
+  policies, final privilege hardening.
+- Decisions: column-level grants instead of trusting update policies for
+  protected fields; moderation only through audited SECURITY DEFINER RPCs;
+  plan limits enforced by triggers; public visibility = approved AND
+  (active/trialing/past_due subscription OR demo) AND not deleted.
+- Seed: BG + 7 cities (Varna, Sofia, Plovdiv, Veliko Tarnovo active), 5
+  categories, 35 service types, 3 plans with features, Open Charge Map source,
+  10 demo businesses in Varna (names start with "Демо", phones use the
+  invalid "+359 52 000" prefix, e-mails on example.com).
+
+Authentication (`src/features/auth`, `src/app/(auth)`):
+- Sign up (customer / business intent, terms consent), sign in, sign out,
+  forgot password, reset password, `/auth/confirm` for `token_hash` and PKCE
+  links, `/auth/error`, `/account`.
+- `getCurrentUser()` DAL verifies the JWT with `getClaims()` and loads roles
+  under RLS; suspended users are treated as signed out.
+- Proxy redirects anonymous visitors away from `/account`, `/dashboard`,
+  `/admin` (optimistic; real checks stay server-side).
+- Rate limiting (`src/lib/security/rate-limit.ts`): Upstash Redis REST in
+  production, in-memory fallback; open-redirect protection for `?next=`.
+- No privileges are ever derived from sign-up metadata (tested).
+
+Verification (2026-11-09):
+- `scripts/db-test.sh` on PostgreSQL 16.15 + PostGIS 3 with the Supabase shim:
+  all migrations + seed apply cleanly; **41/41** RLS and integrity assertions
+  pass (tenant isolation, self-escalation, column protection, forged
+  subscriptions, moderation + audit, public visibility, plan limits, storage
+  paths, booking overlap/buffer/bay/cancel cases, opening-hour overlaps).
+  A deliberately failing test makes the script exit 1.
+- `pnpm typecheck` ✅ · `pnpm lint` ✅ · `pnpm test` ✅ 17/17 · `pnpm build` ✅.
+- Browser (iPhone 13): register/login validation errors render with
+  accessible wiring; with Supabase unconfigured, actions return a friendly
+  "temporarily unavailable" message; no console errors.
+
+Not verified yet: the auth flows against a real Supabase project (the
+Supabase API is blocked from the development container). Needs a check on a
+Vercel preview with real keys: sign-up e-mail, confirmation link, login,
+password reset, logout.
+
+---
+
 ## 2026-11-09 — Phase 0 and Phase 1 (foundation)
 
 ### Phase 0 — inspection
@@ -70,3 +122,74 @@ Verification (2026-11-09):
 Open items: Supabase, OCM and OpenFreeMap hosts are blocked from the
 development container, so integrations are verified against real services
 from a developer machine or Vercel preview.
+
+## 2026-11-09 — Phase 3: public marketplace
+
+Delivered:
+- Public read layer as `SECURITY INVOKER` SQL functions (migration
+  `20261109110000_public_marketplace.sql`): `public_cities`,
+  `public_categories`, `search_businesses` (city/category/service/name,
+  PostGIS radius 5–100 km, open now, booking only, sort by distance/name;
+  rating sort is not offered because no verified reviews exist yet),
+  `get_business_profile`, `public_business_paths`. RLS still applies (anon).
+- Pages: `/search` (list + MapLibre map, mobile list/map toggle, pagination,
+  sort), `/{city}`, `/{city}/{category}` (only non-empty combinations are
+  linked and listed in the sitemap), `/businesses/{city}/{slug}` profiles
+  with services, prices, hours, roadside coverage, call/directions actions,
+  breadcrumbs + LocalBusiness JSON-LD (not for demo listings).
+- Homepage uses live data (featured businesses, category counts).
+- Demo listings are labelled on cards and profiles, `noindex`, excluded from
+  the sitemap and structured data.
+- Analytics events (`profile_view`, `phone_click`, …) via rate-limited server
+  action, no personal data.
+- Browser geolocation is optional and rounded to ~100 m before use.
+- `scripts/dev-rest-shim.mjs` (dev/test only) serves the public RPCs from the
+  local test DB so pages render without a Supabase project.
+- MapLibre worker is copied to `public/vendor/` on install (CSP-friendly,
+  no blob workers); linting ignores that folder.
+
+Verification (2026-11-09):
+- `pnpm typecheck` ✅ · `pnpm lint` ✅ 0 problems · `pnpm test` ✅ 27/27 ·
+  `pnpm db:test` ✅ 66 assertions · `pnpm build` ✅ against the shim.
+- Playwright: hero search → Varna auto repair (3 results); geolocation + 5 km
+  → 2 results with distances; tel links; mobile map mounts only after toggle;
+  no horizontal scroll at 390 px; no console errors (map tiles stubbed).
+
+Known limitations:
+- Unknown slugs return 404 content with `noindex`, but HTTP status 200 when
+  streaming has already started (Cache Components behaviour).
+- Map tiles (OpenFreeMap) and real Supabase auth not verified from this
+  container (hosts blocked).
+
+## 2026-11-09 — Phase 4 (part 1): business dashboard
+
+Delivered:
+- Migration `20261109120000_business_dashboard.sql`: `create_business`
+  (slug generation, primary location, point must be within 60 km of the
+  city), `update_business_location`, `set_location_hours` (atomic replace),
+  `my_businesses`, `dashboard_business`; all SECURITY INVOKER so RLS applies.
+  Draft-period limits use the entry plan; `max_locations`,
+  `max_team_members` and a 5-businesses-per-account limit are enforced by
+  triggers (unauthorised inserts are left to RLS so they fail with a
+  permission error rather than leaking limits).
+- `/dashboard` (list or onboarding CTA), `/dashboard/new` (form with
+  MapLibre pin picker, manual coordinates fallback, no geocoding service),
+  `/dashboard/[id]` overview (setup checklist, submit for review, rejection
+  reason, 30-day stats, plan), `profile`, `location` (24/7, roadside radius
+  and vehicle restrictions, bays), `hours` (split days, copy Monday),
+  `services` (CRUD, euro prices stored as cents, plan limit shown).
+- Staff role sees the dashboard read-only; managers/owners edit.
+- Public caches are invalidated with `updateTag` after edits.
+- Dev shim now emulates password sign-in (HS256, throwaway secret, dev
+  password) and the small PostgREST subset the app uses, so the dashboard
+  can be tested end to end against local PostgreSQL with RLS.
+
+Verification (2026-11-09):
+- `pnpm typecheck` ✅ · `pnpm lint` ✅ · `pnpm test` ✅ 38/38 ·
+  `pnpm db:test` ✅ (41 + marketplace + 20 dashboard assertions) · `pnpm build` ✅.
+- Playwright: anonymous `/dashboard` → login → onboarding (missing pin error,
+  map click) → profile → hours → service → submit → "Чака одобрение";
+  second account gets 404 with no data leak; 390 px without horizontal
+  scroll; no console errors.
+
+Pending in Phase 4: media uploads (Storage), team invitations (email).
