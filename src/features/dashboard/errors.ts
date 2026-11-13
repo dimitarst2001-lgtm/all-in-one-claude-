@@ -22,6 +22,18 @@ export function dashboardErrorMessage(error: PostgrestError): string {
     return "Един акаунт може да създаде най-много 5 бизнеса. Свържи се с нас, ако имаш нужда от повече.";
   if (/location_far_from_city|too far/.test(text))
     return "Точката на картата е твърде далеч от избрания град.";
+  if (/slot_unavailable/.test(text))
+    return "Този час току-що беше зает. Избери друг.";
+  if (/booking_unavailable/.test(text))
+    return "Бизнесът в момента не приема онлайн резервации.";
+  if (/too_many_bookings/.test(text))
+    return "Имаш вече 3 предстоящи резервации при този бизнес.";
+  if (/invalid_booking_services/.test(text))
+    return "Някоя от избраните услуги вече не е налична. Обнови страницата.";
+  if (/invalid_booking_transition/.test(text))
+    return "Резервацията вече е с друг статус. Обнови страницата.";
+  if (/invalid_blocked_range/.test(text))
+    return "Провери датите (най-много една година).";
   if (/invalid_media_path|media_not_uploaded/.test(text))
     return "Снимката не се качи правилно. Опитай отново.";
   if (/invitation_expired/.test(text))

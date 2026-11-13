@@ -231,6 +231,7 @@ export async function saveService(
     "priceTo",
     "durationMinutes",
     "isActive",
+    "isBookable",
   ]);
   const values = Object.fromEntries(
     Object.entries(raw).map(([key, value]) => [key, value ?? ""]),
@@ -248,6 +249,7 @@ export async function saveService(
       price_to_cents: input.priceTo,
       duration_minutes: input.durationMinutes,
       is_active: input.isActive,
+      is_bookable: input.isBookable,
     };
     const query = input.id
       ? supabase

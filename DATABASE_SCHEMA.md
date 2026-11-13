@@ -198,5 +198,9 @@ jsonb`, `after jsonb`, `ip inet`, `created_at`. Insert-only; admins read.
 | `business_team(id)` | members (+ e-mails and open invitations for managers), DEFINER, members only |
 | `invitation_preview(token)`, `accept_business_invitation(token)` | DEFINER; token stored only as SHA-256; must be signed in with the invited e-mail; one use, 7 days |
 | `roadside_providers_for_point(lat, lng, service_slug)` | coverage lookup (Phase 5) |
-| `available_slots(location_id, date, duration)` | slot generation (Phase 5) |
-| `create_booking(...)` | transactional booking with bay assignment (Phase 5) |
+| `booking_options(city_slug, slug)`, `available_slots(business_id, date, service_ids)` | public; slots from availability_rules (else business_hours, 24/7 = whole day), step `booking_slot_minutes`, duration = sum of service durations, minus lead time, horizon, blocked periods and full bays; NULL unless `booking_open()` (enabled, not demo, visible, `online_booking` feature) |
+| `create_booking(business, service_ids, starts_at, name, phone, vehicle, notes)` | DEFINER, signed-in customers only (no guest bookings); re-checks the slot under a per-location advisory lock, assigns the first free bay, max 3 upcoming per customer and business; status `confirmed` when auto-confirm is on, else `pending` |
+| `set_booking_status(id, status, reason)` | staff+; pending → confirmed/rejected/cancelled, confirmed → cancelled, or completed/no_show once started |
+| `cancel_my_booking(id, reason)` | customer cancels own upcoming pending/confirmed booking |
+| `business_bookings(id, scope)`, `my_bookings()` | dashboard list (upcoming/pending/past, RLS) and customer list |
+| `add_blocked_days(id, from, to, reason)`, `business_blocked_days(id)` | whole local days off for the primary location (managers via RLS) |

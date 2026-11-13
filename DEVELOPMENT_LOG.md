@@ -5,6 +5,39 @@ what is still open. Nothing is listed as done without verification evidence.
 
 ---
 
+## 2026-11-13 — Phase 5 part 1 (online bookings)
+
+- Migration `20261114100000_booking_engine.sql`: `booking_open`,
+  `booking_duration`, `available_slots`, `booking_options`, `create_booking`
+  (advisory lock + bay assignment, exclusion constraint as backstop),
+  `booking_notice`, `set_booking_status`, `cancel_my_booking`,
+  `business_bookings`, `my_bookings`, `add_blocked_days`,
+  `business_blocked_days`. Grants: slots/options to anon, the rest to
+  authenticated; `booking_notice` internal.
+- Decisions: booking requires sign-in (no guest bookings: less spam, every
+  booking appears in "my bookings"); demo listings never accept bookings;
+  availability follows business hours unless availability rules exist.
+- UI: `/businesses/[city]/[slug]/book` (services, day chips, slot grid,
+  contact and optional vehicle), `/account/bookings`, dashboard
+  `Резервации` tab (upcoming / pending / history, status actions, settings,
+  days off). Services get an "online bookable" switch. The profile's
+  "calendar coming soon" text is replaced by a real "Запази час" link.
+- E-mails (Resend, best effort): customer on create and on
+  confirm/reject/cancel by the business; business on new booking and on
+  customer cancellation.
+- Also: header and account page link to the dashboard (PR #5).
+
+Verified: `pnpm db:test` (32 new booking assertions: slots, overlap, bays,
+lead/horizon, blocked days, 3-booking limit, transitions, access), unit
+tests, typecheck, lint, format, build; Playwright on the dev shim: customer
+books at 390 px, owner confirms and adds a day off, customer cancels.
+
+Open: online booking cannot be switched on by real businesses until plans can
+be bought (Phase 6). Pre-existing dev-only "instant navigation" warnings on
+public city/profile pages remain.
+
+---
+
 ## 2026-11-09 — Phase 2 (database and authentication)
 
 Database (`supabase/migrations`, 10 files):

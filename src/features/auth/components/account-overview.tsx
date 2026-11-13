@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  CalendarCheckIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   PlusIcon,
@@ -52,6 +53,24 @@ export async function AccountOverview({ searchParams }: AccountOverviewProps) {
           </Button>
         </div>
       )}
+
+      <section
+        aria-labelledby="account-bookings"
+        className="rounded-lg border bg-card p-6 shadow-card"
+      >
+        <h2 id="account-bookings" className="text-lg font-semibold">
+          Моите резервации
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Виж статуса на записаните часове или отмени резервация.
+        </p>
+        <Button asChild variant="outline" className="mt-4">
+          <Link href="/account/bookings">
+            <CalendarCheckIcon aria-hidden="true" />
+            Към резервациите
+          </Link>
+        </Button>
+      </section>
 
       <section
         aria-labelledby="account-businesses"

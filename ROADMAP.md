@@ -43,9 +43,14 @@ Deferred: multiple-locations UI (plans allow it; Starter has one location).
 Business onboarding, profile, locations, hours, services, media uploads
 (Supabase Storage), team invites and permissions, overview stats.
 
-## Phase 5 — Specialised features ⬜
-Roadside flow and coverage areas, booking calendar, slot engine, booking
-management and emails, EV charging import job and map.
+## Phase 5 — Specialised features 🟡
+Done (part 1, bookings): slot engine, booking page for signed-in customers,
+"my bookings" with cancellation, dashboard list with confirm/reject/complete,
+booking settings, days off, notification e-mails (sent when Resend is
+configured). Online booking needs a Professional/Premium plan, so real
+businesses can switch it on after Phase 6 (Stripe); demo listings never take
+bookings.
+Open: roadside flow and coverage areas, EV charging import job and map.
 
 ## Phase 6 — Monetisation ⬜
 Stripe products/prices, Checkout, Customer Portal, webhooks with idempotency,

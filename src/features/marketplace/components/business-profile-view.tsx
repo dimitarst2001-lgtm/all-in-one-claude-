@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 
 import {
   WEEKDAYS,
+  businessPath,
   directionsUrl,
   formatDuration,
   formatPriceRange,
@@ -237,10 +238,25 @@ export function BusinessProfileView({ profile }: { profile: BusinessProfile }) {
           aria-label="Контакти и работно време"
         >
           <InfoCard title="Резервации" icon={CalendarCheckIcon}>
-            {profile.booking_enabled ? (
+            {profile.booking_enabled && !profile.is_demo ? (
+              <div className="grid gap-3">
+                <p className="text-sm text-muted-foreground">
+                  Избери свободен час онлайн.
+                </p>
+                <Button asChild className="w-full">
+                  <TrackedLink
+                    href={`${businessPath(profile.city.slug, profile.slug)}/book`}
+                    businessId={profile.id}
+                    event="booking_cta"
+                  >
+                    <CalendarCheckIcon aria-hidden="true" />
+                    Запази час
+                  </TrackedLink>
+                </Button>
+              </div>
+            ) : profile.booking_enabled ? (
               <p className="text-sm text-muted-foreground">
-                Бизнесът приема онлайн резервации. Календарът за избор на час се
-                активира скоро. Дотогава се свържи по телефона.
+                Това е демо профил, затова онлайн резервациите не са активни.
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">

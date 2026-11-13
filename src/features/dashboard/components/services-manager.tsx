@@ -125,6 +125,15 @@ function ServiceForm({
         />
         Показвай услугата в профила
       </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          name="isBookable"
+          defaultChecked={service?.is_bookable ?? false}
+          className="size-4 accent-primary"
+        />
+        Може да се запази час онлайн (нужно е времетраене)
+      </label>
       <div className="flex flex-wrap gap-2">
         <SubmitButton pendingLabel="Запазване…" className="w-auto">
           {service ? "Запази" : "Добави услугата"}
