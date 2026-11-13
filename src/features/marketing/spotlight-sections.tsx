@@ -40,7 +40,7 @@ export function SpotlightSections() {
             </li>
           </ul>
           <Link
-            href="/search?category=roadside-assistance&city=varna"
+            href="/roadside"
             className="mt-6 inline-flex items-center gap-1.5 self-start text-sm font-medium text-white hover:underline"
           >
             Намери пътна помощ

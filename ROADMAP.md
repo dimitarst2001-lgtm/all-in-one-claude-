@@ -50,7 +50,11 @@ booking settings, days off, notification e-mails (sent when Resend is
 configured). Online booking needs a Professional/Premium plan, so real
 businesses can switch it on after Phase 6 (Stripe); demo listings never take
 bookings.
-Open: roadside flow and coverage areas, EV charging import job and map.
+Done (part 2, roadside): `/roadside` page (problem, optional browser location
+rounded to ~100 m or a city, providers whose radius / whole-city / polygon
+coverage contains the point, available-now first, direct call; demo listings
+have no call button), coverage cities in the dashboard.
+Open: EV charging import job and map.
 
 ## Phase 6 — Monetisation ⬜
 Stripe products/prices, Checkout, Customer Portal, webhooks with idempotency,

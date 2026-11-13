@@ -81,6 +81,23 @@ export const getBusinessTeam = cache(
   },
 );
 
+/** City slugs a location covers as whole-city roadside service areas. */
+export const getCoverageCities = cache(
+  async (locationId: string): Promise<string[]> => {
+    if (!isSupabaseConfigured() || !z.uuid().safeParse(locationId).success) {
+      return [];
+    }
+    const supabase = await getSupabaseServerClient();
+    const { data, error } = await supabase.rpc("location_coverage_cities", {
+      p_location_id: locationId,
+    });
+    if (error) {
+      throw new Error(`[dashboard] location_coverage_cities: ${error.message}`);
+    }
+    return z.array(z.string()).parse(data ?? []);
+  },
+);
+
 export async function getInvitationPreview(
   token: string,
 ): Promise<InvitationPreview | null> {
