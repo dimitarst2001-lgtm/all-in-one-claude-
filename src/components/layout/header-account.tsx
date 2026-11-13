@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { CircleUserRoundIcon, LogInIcon } from "lucide-react";
+import {
+  CircleUserRoundIcon,
+  LayoutDashboardIcon,
+  LogInIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/features/auth/session";
@@ -12,12 +16,20 @@ export async function HeaderAccount() {
 
   if (user) {
     return (
-      <Button asChild variant="ghost-dark" size="sm">
-        <Link href="/account" aria-label="Моят профил">
-          <CircleUserRoundIcon aria-hidden="true" />
-          <span className="hidden sm:inline">Профил</span>
-        </Link>
-      </Button>
+      <>
+        <Button asChild variant="ghost-dark" size="sm">
+          <Link href="/dashboard" aria-label="Моите бизнеси">
+            <LayoutDashboardIcon aria-hidden="true" />
+            <span className="hidden sm:inline">Моите бизнеси</span>
+          </Link>
+        </Button>
+        <Button asChild variant="ghost-dark" size="sm">
+          <Link href="/account" aria-label="Моят профил">
+            <CircleUserRoundIcon aria-hidden="true" />
+            <span className="hidden sm:inline">Профил</span>
+          </Link>
+        </Button>
+      </>
     );
   }
 
