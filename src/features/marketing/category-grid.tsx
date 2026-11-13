@@ -13,7 +13,7 @@ export async function CategoryGrid() {
 
   /** Link to the city landing page when it has listings, otherwise to search. */
   function hrefFor(slug: string): string | null {
-    if (slug === "charging-stations") return null; // EV map ships in Phase 5.
+    if (slug === "charging-stations") return "/charging";
     if (!launchCity) return null;
     return (launchCity.category_counts[slug] ?? 0) > 0
       ? `/${LAUNCH_CITY}/${slug}`
