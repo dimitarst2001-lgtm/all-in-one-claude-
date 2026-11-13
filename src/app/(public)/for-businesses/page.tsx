@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { CheckIcon, MailIcon } from "lucide-react";
+import Link from "next/link";
+import { CheckIcon, MailIcon, PlusIcon } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -82,23 +83,29 @@ export default function ForBusinessesPage() {
           </ul>
 
           <div className="mt-10 rounded-lg border bg-accent/60 p-6">
-            <h2 className="font-semibold">
-              Регистрацията на бизнеси отваря скоро
-            </h2>
+            <h2 className="font-semibold">Създай бизнес профила си</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Подготвяме старта във {siteConfig.launchCity}. Всеки профил се
-              преглежда от екипа ни, преди да стане публичен.
+              Регистрирай се, попълни профила и го изпрати за преглед. Всеки
+              профил се преглежда от екипа ни, преди да стане публичен.
             </p>
-            {contactEmail && (
-              <Button asChild className="mt-4">
-                <a
-                  href={`mailto:${contactEmail}?subject=${encodeURIComponent("Регистрация на бизнес")}`}
-                >
-                  <MailIcon aria-hidden="true" />
-                  Пиши ни
-                </a>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button asChild>
+                <Link href="/dashboard/new">
+                  <PlusIcon aria-hidden="true" />
+                  Създай бизнес профил
+                </Link>
               </Button>
-            )}
+              {contactEmail && (
+                <Button asChild variant="outline">
+                  <a
+                    href={`mailto:${contactEmail}?subject=${encodeURIComponent("Регистрация на бизнес")}`}
+                  >
+                    <MailIcon aria-hidden="true" />
+                    Пиши ни
+                  </a>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </section>
