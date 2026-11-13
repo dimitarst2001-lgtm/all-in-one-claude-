@@ -14,7 +14,7 @@ export const mainNav: readonly NavItem[] = [
   { title: "Варна", href: "/varna" },
   {
     title: "Пътна помощ",
-    href: "/search?category=roadside-assistance&city=varna",
+    href: "/roadside",
   },
   { title: "За бизнеси", href: "/for-businesses" },
 ];

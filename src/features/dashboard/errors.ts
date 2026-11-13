@@ -34,6 +34,10 @@ export function dashboardErrorMessage(error: PostgrestError): string {
     return "Резервацията вече е с друг статус. Обнови страницата.";
   if (/invalid_blocked_range/.test(text))
     return "Провери датите (най-много една година).";
+  if (/invalid_coverage_city/.test(text))
+    return "Някой от избраните градове вече не е наличен. Обнови страницата.";
+  if (/too_many_coverage_cities/.test(text))
+    return "Можеш да избереш най-много 20 града.";
   if (/invalid_media_path|media_not_uploaded/.test(text))
     return "Снимката не се качи правилно. Опитай отново.";
   if (/invitation_expired/.test(text))

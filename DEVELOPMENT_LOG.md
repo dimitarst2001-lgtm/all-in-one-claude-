@@ -5,6 +5,33 @@ what is still open. Nothing is listed as done without verification evidence.
 
 ---
 
+## 2026-11-13 — Phase 5 part 2 (roadside assistance)
+
+- Migration `20261115100000_roadside.sql`: `roadside_providers_for_point`
+  (public, SECURITY INVOKER so RLS keeps hidden businesses out; coverage =
+  polygon, radius around the base, or a whole city as centre +
+  `default_radius_km`; 24/7 or open-now first, then distance),
+  `location_coverage_cities`, `set_location_coverage_cities` (managers, active
+  cities only, max 20, polygons untouched).
+- `/roadside`: problem picker, "use my location" only after a click (rounded
+  to ~100 m, not stored) or a city, provider cards with coverage, distance,
+  services, direct call. A call is not an order: no requests, ETA or
+  tracking. Demo listings show no call button (their numbers are not real).
+  112 notice for accidents. Navigation, home CTA and sitemap point here.
+- Dashboard `Адрес`: roadside businesses pick whole cities they cover, next to
+  the existing radius.
+
+Verified: `pnpm db:test` (new 60_roadside: demo coverage, service filter,
+radius vs. Dobrich, unpaid businesses hidden, city coverage add/remove,
+strangers and anon refused) · typecheck, lint, unit tests (+3) · build ·
+Playwright against the shim: geolocation search (390 px), city search
+(1280 px), coverage cities saved and reloaded. Only console errors are map
+tiles blocked by the sandbox.
+
+Open: EV charging import job and map.
+
+---
+
 ## 2026-11-13 — Phase 5 part 1 (online bookings)
 
 - Migration `20261114100000_booking_engine.sql`: `booking_open`,

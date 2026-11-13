@@ -35,6 +35,7 @@ const PUBLIC_RPC = new Set([
   "track_business_event",
   "booking_options",
   "available_slots",
+  "roadside_providers_for_point",
 ]);
 const USER_RPC = new Set([
   ...PUBLIC_RPC,
@@ -57,8 +58,11 @@ const USER_RPC = new Set([
   "my_bookings",
   "add_blocked_days",
   "business_blocked_days",
+  "location_coverage_cities",
+  "set_location_coverage_cities",
 ]);
 const WRITE_RPC = new Set([
+  "set_location_coverage_cities",
   "create_booking",
   "set_booking_status",
   "cancel_my_booking",

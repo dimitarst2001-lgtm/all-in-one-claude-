@@ -177,6 +177,42 @@ export async function updateLocation(
   });
 }
 
+const citySlug = z
+  .string()
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+  .max(80);
+
+export async function saveCoverageCities(
+  businessId: string,
+  locationId: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  if (
+    !z.uuid().safeParse(businessId).success ||
+    !z.uuid().safeParse(locationId).success
+  ) {
+    return NOT_SIGNED_IN;
+  }
+  const parsed = z
+    .array(citySlug)
+    .max(20)
+    .safeParse(formData.getAll("cities").map(String));
+  if (!parsed.success) {
+    return { status: "error", message: "Невалиден избор на градове." };
+  }
+
+  return authed(async (supabase) => {
+    const { error } = await supabase.rpc("set_location_coverage_cities", {
+      p_location_id: locationId,
+      p_city_slugs: [...new Set(parsed.data)],
+    });
+    if (error) return fail(error);
+    await invalidatePublic(businessId);
+    return SAVED;
+  });
+}
+
 export async function saveHours(
   businessId: string,
   locationId: string,
