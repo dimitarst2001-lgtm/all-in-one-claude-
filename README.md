@@ -43,5 +43,11 @@ pnpm test        # Vitest unit tests
 pnpm build       # production build
 ```
 
-Supabase, Stripe and deployment setup guides are added under `docs/setup/` as
-the corresponding phases ship (see ROADMAP.md).
+Database tests (PostgreSQL + PostGIS, no Supabase needed):
+
+```bash
+PGHOST=localhost PGUSER=postgres pnpm db:test
+```
+
+Setup guides: [Supabase](docs/setup/supabase.md). Stripe and Vercel guides are
+added as those phases ship (see ROADMAP.md).

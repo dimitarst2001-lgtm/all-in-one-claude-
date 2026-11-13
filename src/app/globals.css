@@ -181,3 +181,39 @@
     padding-inline: 2rem;
   }
 }
+
+/* Map markers and popups (MapLibre DOM, outside React) */
+@layer components {
+  .aio-map-marker {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px 9999px 9999px 0;
+    transform: rotate(-45deg);
+    background: var(--primary);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgb(16 27 43 / 0.35);
+    cursor: pointer;
+  }
+
+  .aio-map-popup {
+    display: grid;
+    gap: 2px;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+  }
+
+  .aio-map-popup a,
+  .aio-map-popup strong {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  .aio-map-popup a:hover {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+
+  .aio-map-popup span {
+    color: var(--muted-foreground);
+  }
+}
