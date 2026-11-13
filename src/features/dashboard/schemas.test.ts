@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createBusinessSchema,
   hoursSchema,
+  inviteSchema,
   phoneSchema,
   profileSchema,
   serviceSchema,
@@ -133,5 +134,22 @@ describe("hasRole", () => {
     expect(hasRole("manager", "manager")).toBe(true);
     expect(hasRole("staff", "manager")).toBe(false);
     expect(hasRole(null, "staff")).toBe(false);
+  });
+});
+
+describe("inviteSchema", () => {
+  it("normalises the e-mail address", () => {
+    expect(
+      inviteSchema.parse({ email: "  Maria@Example.COM ", role: "staff" }),
+    ).toEqual({ email: "maria@example.com", role: "staff" });
+  });
+
+  it("rejects the owner role and invalid e-mails", () => {
+    expect(
+      inviteSchema.safeParse({ email: "a@b.bg", role: "owner" }).success,
+    ).toBe(false);
+    expect(
+      inviteSchema.safeParse({ email: "not-an-email", role: "staff" }).success,
+    ).toBe(false);
   });
 });

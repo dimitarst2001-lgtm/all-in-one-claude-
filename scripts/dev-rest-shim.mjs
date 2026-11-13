@@ -20,7 +20,9 @@
  *   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=dev pnpm dev
  */
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
+import { dirname, join } from "node:path";
 
 import pg from "pg";
 
@@ -40,8 +42,17 @@ const USER_RPC = new Set([
   "update_business_location",
   "set_location_hours",
   "submit_business_for_review",
+  "register_business_media",
+  "move_business_media",
+  "business_team",
+  "business_feature_limit",
+  "invitation_preview",
+  "accept_business_invitation",
 ]);
 const WRITE_RPC = new Set([
+  "register_business_media",
+  "move_business_media",
+  "accept_business_invitation",
   "track_business_event",
   "create_business",
   "update_business_location",
@@ -53,20 +64,32 @@ const TABLES = new Set([
   "user_roles",
   "businesses",
   "business_services",
+  "business_media",
+  "business_members",
+  "business_invitations",
 ]);
 
 const PORT = Number(process.env.SHIM_PORT ?? 54321);
 const PASSWORD = process.env.SHIM_PASSWORD ?? "dev-password-1";
 const SECRET = randomBytes(32);
 const IDENT = /^[a-z_]+$/;
+const STORAGE_DIR = process.env.SHIM_STORAGE_DIR ?? "/tmp/aio-shim-storage";
+const BUCKET = "business-media";
+const OBJECT_PATH = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|jpeg|png|webp|avif)$/;
 
 const pool = new pg.Pool({
   database: process.env.TEST_DB ?? "aio_test",
   max: 5,
 });
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+};
+
 function send(res, status, body) {
-  res.writeHead(status, { "content-type": "application/json" });
+  res.writeHead(status, { ...CORS, "content-type": "application/json" });
   res.end(body === undefined ? "" : JSON.stringify(body));
 }
 
@@ -255,10 +278,20 @@ async function handleRpc(req, res, fn, args) {
 
 function parseQuery(url) {
   const filters = [];
+  const order = [];
   let select = "*";
   for (const [key, value] of url.searchParams) {
     if (key === "select") {
       select = value;
+      continue;
+    }
+    if (key === "order") {
+      for (const part of value.split(",")) {
+        const [column, direction = "asc"] = part.split(".");
+        if (!IDENT.test(column) || !["asc", "desc"].includes(direction))
+          throw new Error(`unsupported order ${value}`);
+        order.push(`"${column}" ${direction}`);
+      }
       continue;
     }
     if (!IDENT.test(key)) throw new Error(`unsupported filter ${key}`);
@@ -271,7 +304,7 @@ function parseQuery(url) {
   if (!columns.every((column) => column === "*" || IDENT.test(column))) {
     throw new Error(`unsupported select ${select}`);
   }
-  return { filters, columns };
+  return { filters, columns, order };
 }
 
 function whereClause(filters, params) {
@@ -299,7 +332,7 @@ async function handleTable(req, res, url, table, body) {
     return;
   }
   try {
-    const { filters, columns } = parseQuery(url);
+    const { filters, columns, order } = parseQuery(url);
     const list = columns
       .map((column) => (column === "*" ? "*" : `"${column}"`))
       .join(", ");
@@ -307,6 +340,9 @@ async function handleTable(req, res, url, table, body) {
     let sql;
     if (req.method === "GET") {
       sql = `select ${list} from public.${table}${whereClause(filters, params)}`;
+      if (order.length) sql += ` order by ${order.join(", ")}`;
+    } else if (req.method === "DELETE") {
+      sql = `delete from public.${table}${whereClause(filters, params)} returning ${list}`;
     } else if (req.method === "PATCH" || req.method === "POST") {
       const row = Array.isArray(body) ? body[0] : body;
       const keys = Object.keys(row ?? {});
@@ -338,13 +374,107 @@ async function handleTable(req, res, url, table, body) {
   }
 }
 
+// --- storage (business-media bucket only) ------------------------------------------
+
+const MIME = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  avif: "image/avif",
+};
+
+async function handleStorage(req, res, url, buffer) {
+  const path = url.pathname.replace("/storage/v1/object/", "");
+
+  if (req.method === "GET" && path.startsWith(`public/${BUCKET}/`)) {
+    const name = decodeURIComponent(path.slice(`public/${BUCKET}/`.length));
+    if (!OBJECT_PATH.test(name))
+      return send(res, 404, { message: "not found" });
+    try {
+      const file = await readFile(join(STORAGE_DIR, name));
+      res.writeHead(200, {
+        ...CORS,
+        "Content-Type": MIME[name.split(".").pop()],
+      });
+      res.end(file);
+    } catch {
+      send(res, 404, { message: "not found" });
+    }
+    return;
+  }
+
+  const claims = claimsFrom(req);
+  if (!claims) return send(res, 403, { message: "not signed in" });
+
+  if (req.method === "POST" && path.startsWith(`${BUCKET}/`)) {
+    const name = decodeURIComponent(path.slice(BUCKET.length + 1));
+    if (!OBJECT_PATH.test(name) || buffer.length > 5 * 1024 * 1024)
+      return send(res, 400, { message: "invalid object" });
+    try {
+      await run(
+        claims,
+        false,
+        "insert into storage.objects (bucket_id, name, owner) values ($1, $2, $3::uuid)",
+        [BUCKET, name, claims.sub],
+      );
+    } catch (error) {
+      return send(res, 403, { message: error.message, statusCode: "403" });
+    }
+    const target = join(STORAGE_DIR, name);
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, buffer);
+    return send(res, 200, { Key: `${BUCKET}/${name}`, Id: name });
+  }
+
+  if (req.method === "DELETE" && path === BUCKET) {
+    let names = [];
+    try {
+      names = JSON.parse(buffer.toString("utf8")).prefixes ?? [];
+    } catch {
+      return send(res, 400, { message: "invalid json" });
+    }
+    const { rows } = await run(
+      claims,
+      false,
+      "delete from storage.objects where bucket_id = $1 and name = any($2::text[]) returning name",
+      [BUCKET, names.filter((name) => OBJECT_PATH.test(name))],
+    );
+    for (const row of rows)
+      await unlink(join(STORAGE_DIR, row.name)).catch(() => {});
+    return send(
+      res,
+      200,
+      rows.map((row) => ({ name: row.name })),
+    );
+  }
+
+  send(res, 404, { message: "not available in dev shim" });
+}
+
 createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
-  let raw = "";
-  for await (const chunk of req) raw += chunk;
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, CORS);
+    res.end();
+    return;
+  }
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const buffer = Buffer.concat(chunks);
+
+  try {
+    if (url.pathname.startsWith("/storage/v1/"))
+      return await handleStorage(req, res, url, buffer);
+  } catch (error) {
+    console.error(error);
+    send(res, 500, { message: "shim error" });
+    return;
+  }
+
   let body;
   try {
-    body = raw ? JSON.parse(raw) : {};
+    body = buffer.length ? JSON.parse(buffer.toString("utf8")) : {};
   } catch {
     send(res, 400, { message: "invalid json" });
     return;

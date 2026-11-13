@@ -4,6 +4,9 @@ import { ServicesManager } from "@/features/dashboard/components/services-manage
 import { loadDashboardBusiness } from "@/features/dashboard/load";
 
 export const metadata: Metadata = { title: "Услуги", robots: { index: false } };
+// Private, per-user view: rendered on demand inside the layout's Suspense
+// boundary rather than as an instant-navigation shell.
+export const instant = false;
 
 export default async function BusinessServicesPage({
   params,

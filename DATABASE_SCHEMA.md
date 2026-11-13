@@ -176,7 +176,7 @@ jsonb`, `after jsonb`, `ip inet`, `created_at`. Insert-only; admins read.
   `plan_features`, `platform_settings`, `user_roles`, `business_members`) are
   audited by the `audit_row_change()` trigger.
 - Tests: `supabase/tests/10_rls_and_integrity.sql` (41 assertions),
-  `30_dashboard.sql` (20 assertions).
+  `30_dashboard.sql` (20 assertions), `40_media_team.sql` (24 assertions).
 - Draft period: before a subscription exists, limits fall back to the entry
   plan (Starter) so a business can prepare its profile. Visibility and
   on/off features (online booking) still require a live subscription.
@@ -194,6 +194,9 @@ jsonb`, `after jsonb`, `ip inet`, `created_at`. Insert-only; admins read.
 | `search_businesses(...)` | geo + filters + pagination (Phase 3) |
 | `create_business(...)`, `update_business_location(...)`, `set_location_hours(...)` | dashboard writes, SECURITY INVOKER (RLS applies), atomic |
 | `my_businesses()`, `dashboard_business(id)` | dashboard reads (members only via RLS) |
+| `register_business_media(business, path, kind, w, h, alt)`, `move_business_media(id, dir)` | photos, SECURITY INVOKER; path must be `{business_id}/{uuid}.{ext}` and already uploaded; logo/cover replace the previous one (soft delete) |
+| `business_team(id)` | members (+ e-mails and open invitations for managers), DEFINER, members only |
+| `invitation_preview(token)`, `accept_business_invitation(token)` | DEFINER; token stored only as SHA-256; must be signed in with the invited e-mail; one use, 7 days |
 | `roadside_providers_for_point(lat, lng, service_slug)` | coverage lookup (Phase 5) |
 | `available_slots(location_id, date, duration)` | slot generation (Phase 5) |
 | `create_booking(...)` | transactional booking with bay assignment (Phase 5) |

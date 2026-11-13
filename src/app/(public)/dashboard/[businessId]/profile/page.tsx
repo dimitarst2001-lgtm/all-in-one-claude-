@@ -4,6 +4,9 @@ import { ProfileForm } from "@/features/dashboard/components/profile-form";
 import { loadDashboardBusiness } from "@/features/dashboard/load";
 
 export const metadata: Metadata = { title: "Профил", robots: { index: false } };
+// Private, per-user view: rendered on demand inside the layout's Suspense
+// boundary rather than as an instant-navigation shell.
+export const instant = false;
 
 export default async function BusinessProfileSettingsPage({
   params,

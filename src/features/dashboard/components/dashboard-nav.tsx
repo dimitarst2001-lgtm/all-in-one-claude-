@@ -4,10 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ClockIcon,
+  ImageIcon,
   LayoutDashboardIcon,
   ListChecksIcon,
   MapPinIcon,
   StoreIcon,
+  UsersIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -18,6 +20,8 @@ const items = [
   { segment: "/location", label: "Адрес", icon: MapPinIcon },
   { segment: "/hours", label: "Работно време", icon: ClockIcon },
   { segment: "/services", label: "Услуги", icon: ListChecksIcon },
+  { segment: "/photos", label: "Снимки", icon: ImageIcon },
+  { segment: "/team", label: "Екип", icon: UsersIcon },
 ] as const;
 
 export function DashboardNav({ businessId }: { businessId: string }) {
