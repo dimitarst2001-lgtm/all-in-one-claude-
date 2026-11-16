@@ -36,6 +36,7 @@ const PUBLIC_RPC = new Set([
   "booking_options",
   "available_slots",
   "roadside_providers_for_point",
+  "charging_stations_search",
 ]);
 const USER_RPC = new Set([
   ...PUBLIC_RPC,

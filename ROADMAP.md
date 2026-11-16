@@ -54,7 +54,13 @@ Done (part 2, roadside): `/roadside` page (problem, optional browser location
 rounded to ~100 m or a city, providers whose radius / whole-city / polygon
 coverage contains the point, available-now first, direct call; demo listings
 have no call button), coverage cities in the dashboard.
-Open: EV charging import job and map.
+Done (part 3, EV charging): `charging_import` (service role only) + nightly
+Vercel cron `/api/cron/charging-import` (Open Charge Map, Bulgaria),
+`/charging` page with map, city / "near me", radius, connector, power and DC
+filters, attribution and last import date.
+Open: first live import (needs `OPEN_CHARGE_MAP_API_KEY`, `CRON_SECRET`,
+`SUPABASE_SECRET_KEY` in Vercel); the provider call could not be tested from
+the development sandbox (openchargemap.io is blocked there).
 
 ## Phase 6 — Monetisation ⬜
 Stripe products/prices, Checkout, Customer Portal, webhooks with idempotency,

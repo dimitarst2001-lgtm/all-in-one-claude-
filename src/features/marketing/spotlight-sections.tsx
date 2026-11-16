@@ -77,6 +77,13 @@ export function SpotlightSections() {
               предоставя.
             </li>
           </ul>
+          <Link
+            href="/charging"
+            className="mt-6 inline-flex items-center gap-1.5 self-start text-sm font-medium text-primary hover:underline"
+          >
+            Виж картата
+            <ArrowRightIcon className="size-4" aria-hidden="true" />
+          </Link>
         </article>
       </div>
     </section>

@@ -5,6 +5,35 @@ what is still open. Nothing is listed as done without verification evidence.
 
 ---
 
+## 2026-11-13 — Phase 5 part 3 (EV charging)
+
+- Migration `20261116100000_charging_engine.sql`: `charging_import`,
+  `charging_import_failed` (service role only), `charging_stations_search`
+  (anon, RLS applies).
+- Import: `src/features/charging/import.ts` (`ChargingDataProvider`, Open
+  Charge Map provider: `countrycode=BG`, `compact=false`, key in
+  `X-API-Key`), `ocm.ts` normaliser (connection type ids and titles →
+  `ccs2/type2/chademo/...`, current type → AC/DC, usage type → public).
+  `/api/cron/charging-import` requires `Authorization: Bearer $CRON_SECRET`
+  (constant-time compare) and returns 503 when keys are missing.
+  `vercel.json` runs it daily at 02:00 UTC. Pages never call the provider.
+- `/charging`: filters (city or "near me" rounded to ~100 m, radius,
+  connector, minimum power, DC only), MapLibre map + station cards
+  (connectors, power, status/access/price as given by the source, directions,
+  source link), "no real-time availability" note, attribution with licence
+  and last import date. Linked from navigation, home categories, EV section
+  and sitemap.
+
+Verified: `pnpm db:test` (new 70_charging: permissions, idempotent re-import,
+connector replacement, derived fields, city assignment, filters, hidden
+stations, truncated-batch guard, failure status) · unit tests 48/48 (OCM
+normaliser, params) · typecheck, lint, build · Playwright against the shim
+with 3 sample stations: filters (power + DC, CHAdeMO), empty city, 390 px
+and 1280 px · cron route: 503 without config, 401 with a wrong secret.
+Not verified: a real Open Charge Map response (host blocked in the sandbox).
+
+---
+
 ## 2026-11-13 — Phase 5 part 2 (roadside assistance)
 
 - Migration `20261115100000_roadside.sql`: `roadside_providers_for_point`
